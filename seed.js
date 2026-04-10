@@ -4,6 +4,29 @@ import 'dotenv/config';
 
 const prisma = new PrismaClient();
 
+const storeImageMap = {
+  'H&M': '/store-images/hnm.jfif',
+  'Zara': '/store-images/zara.jfif',
+  'Apple Store': '/store-images/apple.jfif',
+  'Nike Town': '/store-images/nike.jfif',
+  'Starbucks': '/store-images/starbucks.jfif',
+  'Best Buy': '/store-images/bestbuy.jfif',
+  'Whole Foods': '/store-images/wholefoods.jfif',
+  'Home Depot': '/store-images/hemodepot.jfif',
+  'Adidas': '/store-images/adidas.jfif',
+  'Barnes & Noble': '/store-images/barnes.jfif',
+  'Red Lobster': '/store-images/redlobster.jfif',
+  'Planet Fitness': '/store-images/planetfitness.jfif',
+  'IKEA': '/store-images/ikea.jfif',
+  'Samsung Experience': '/store-images/samsung.jfif',
+  'Urban Outfitters': '/store-images/urban.jfif',
+  'Dunkin Donuts': '/store-images/dunkin.jfif',
+  'AutoZone': '/store-images/autozone.jfif',
+  'Panera Bread': '/store-images/panerabread.jfif',
+  "Dave & Buster's": '/store-images/dave.jfif',
+  'Sephora': '/store-images/sephora.jfif'
+};
+
 async function main() {
   const isProduction = process.env.NODE_ENV === 'production';
   const allowProductionSeed = process.env.ALLOW_PRODUCTION_SEED === 'true';
@@ -135,8 +158,7 @@ async function main() {
       }
     });
 
-    // Using picsum photos seeded by store name so it stays consistent between regenerations
-    const imageUrl = `https://picsum.photos/seed/${encodeURIComponent(s.name.replace(/\s+/g, ''))}/400/250`;
+    const imageUrl = storeImageMap[s.name] || '/store-images/default.jfif';
 
     const createdStore = await prisma.store.create({
       data: {
