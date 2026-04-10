@@ -4,12 +4,14 @@ import {
   getDashboard,
   getUsers,
   createUser,
+  deleteUser,
   getUserById,
   getStores,
   createStore
 } from '../controllers/adminController.js';
 import {
   adminUserCreationValidation,
+  idParamValidation,
   storeCreationValidation
 } from '../validators/index.js';
 
@@ -21,7 +23,8 @@ router.use(verifyToken, requireRole(['ADMIN']));
 router.get('/dashboard', getDashboard);
 router.get('/users', getUsers);
 router.post('/users', adminUserCreationValidation, createUser);
-router.get('/users/:id', getUserById);
+router.get('/users/:id', idParamValidation, getUserById);
+router.delete('/users/:id', idParamValidation, deleteUser);
 router.get('/stores', getStores);
 router.post('/stores', storeCreationValidation, createStore);
 

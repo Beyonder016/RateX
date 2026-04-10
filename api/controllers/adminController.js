@@ -51,6 +51,12 @@ export const getUsers = async (req, res) => {
 export const createUser = async (req, res) => {
   try {
     const { name, email, address, password, role } = req.body;
+    const normalizedRole = role || 'NORMAL';
+    const allowedRoles = ['ADMIN', 'NORMAL', 'STORE_OWNER'];
+
+    if (!allowedRoles.includes(normalizedRole)) {
+      return res.status(400).json({ success: false, message: 'Invalid role selected' });
+    }
     
     // Check if user exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -60,10 +66,58 @@ export const createUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     const user = await prisma.user.create({
-      data: { name, email, address, role, password: hashedPassword }
+      data: { name, email, address, role: normalizedRole, password: hashedPassword }
     });
 
     res.status(201).json({ success: true, user: { id: user.id, name: user.name, role: user.role } });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const deleteUser = async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    if (req.user.id === userId) {
+      return res.status(400).json({ success: false, message: 'You cannot delete your own account' });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { store: true }
+    });
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.role === 'ADMIN') {
+      const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+      if (adminCount <= 1) {
+        return res.status(400).json({ success: false, message: 'You cannot delete the last admin account' });
+      }
+    }
+
+    await prisma.$transaction(async (tx) => {
+      if (user.store) {
+        await tx.wishlist.deleteMany({ where: { storeId: user.store.id } });
+        await tx.rating.deleteMany({ where: { storeId: user.store.id } });
+        await tx.store.delete({ where: { id: user.store.id } });
+      }
+
+      await tx.wishlist.deleteMany({ where: { userId } });
+      await tx.rating.deleteMany({ where: { userId } });
+      await tx.user.delete({ where: { id: userId } });
+    });
+
+    res.json({
+      success: true,
+      message: user.store
+        ? 'User and their store were removed successfully'
+        : 'User removed successfully'
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server error' });

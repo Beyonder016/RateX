@@ -1,4 +1,4 @@
-import { body, validationResult } from 'express-validator';
+import { body, param, validationResult } from 'express-validator';
 
 export const validateResult = (req, res, next) => {
   const errors = validationResult(req);
@@ -61,5 +61,10 @@ export const storeCreationValidation = [
   body('email').isEmail().withMessage('Invalid store email format'),
   body('address').isString().isLength({ max: 400 }).withMessage('Address cannot exceed 400 characters'),
   body('ownerId').isUUID().withMessage('Valid owner ID is required'),
+  validateResult
+];
+
+export const idParamValidation = [
+  param('id').isUUID().withMessage('Valid ID is required'),
   validateResult
 ];

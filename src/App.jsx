@@ -9,6 +9,7 @@ import NormalDashboard from './pages/NormalDashboard.jsx';
 import OwnerDashboard from './pages/OwnerDashboard.jsx';
 import StoreDetails from './pages/StoreDetails.jsx';
 import Wishlists from './pages/Wishlists.jsx';
+import ManualViewer from './pages/ManualViewer.jsx';
 
 /* ────────── SVG Filter for Liquid Glass distortion ────────── */
 const LiquidGlassSVGFilter = () => (
@@ -137,9 +138,51 @@ const Header = () => {
       position: 'relative',
       zIndex: 100,
     }}>
-      <Link to="/home" style={{ textDecoration: 'none' }}>
-        <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 800, letterSpacing: '-0.5px' }}>RateX</h2>
-      </Link>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+        <Link to="/home" style={{ textDecoration: 'none' }}>
+          <h2 style={{ margin: 0, color: 'var(--primary)', fontWeight: 800, letterSpacing: '-0.5px' }}>RateX</h2>
+        </Link>
+        <Link to="/manual" target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+          <div style={{
+            position: 'relative',
+            padding: '0.45rem 1.2rem',
+            borderRadius: '10px',
+            overflow: 'hidden',
+            cursor: 'pointer',
+            transition: 'transform 0.2s ease',
+          }}
+            onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.04)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+          >
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 0,
+              backdropFilter: 'blur(2px)',
+              WebkitBackdropFilter: 'blur(2px)',
+              filter: 'url(#liquid-glass)',
+              borderRadius: 'inherit',
+              background: 'rgba(34, 197, 94, 0.1)',
+            }} />
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 1,
+              boxShadow: '0 4px 4px rgba(0,0,0,0.1), 0 0 12px rgba(0,0,0,0.06)',
+              borderRadius: 'inherit',
+            }} />
+            <div style={{
+              position: 'absolute', inset: 0, zIndex: 2,
+              boxShadow: 'inset 2px 2px 2px 0 rgba(134,239,172,0.22), inset -2px -2px 2px 0 rgba(134,239,172,0.16)',
+              borderRadius: 'inherit',
+            }} />
+            <span style={{
+              position: 'relative', zIndex: 3,
+              fontWeight: 600, fontSize: '0.9rem',
+              color: '#15803d',
+              textShadow: '0 0 5px rgba(21,128,61,0.12)',
+            }}>
+              Website Manual
+            </span>
+          </div>
+        </Link>
+      </div>
       <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
         {user.role === 'NORMAL' && (
           <Link to="/wishlists" style={{ textDecoration: 'none' }}>
@@ -278,6 +321,11 @@ function App() {
                 <Route path="/wishlists" element={
                   <ProtectedRoute allowedRoles={['NORMAL']}>
                     <Wishlists />
+                  </ProtectedRoute>
+                } />
+                <Route path="/manual" element={
+                  <ProtectedRoute allowedRoles={['NORMAL', 'ADMIN', 'STORE_OWNER']}>
+                    <ManualViewer />
                   </ProtectedRoute>
                 } />
                 <Route path="/owner" element={

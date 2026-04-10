@@ -1,0 +1,52 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+5 0 obj
+<< /Length 533 >>
+stream
+BT
+/F1 24 Tf
+72 740 Td
+(RateX Website Manual) Tj
+0 -30 Td
+/F1 13 Tf
+(A quick guide for using the platform.) Tj
+0 -32 Td
+/F1 13 Tf
+(1. Login with your assigned email and password.) Tj
+0 -22 Td
+(2. Users can browse stores, rate stores, and manage wishlists.) Tj
+0 -22 Td
+(3. Store owners can review ratings for their own store.) Tj
+0 -22 Td
+(4. Admins can create users, remove users, and manage stores.) Tj
+0 -22 Td
+(5. Use the Website Manual button in the header anytime you need help.) Tj
+0 -34 Td
+(Thank you for using RateX.) Tj
+ET
+endstream
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000000311 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+894
+%%EOF

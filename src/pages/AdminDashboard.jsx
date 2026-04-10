@@ -32,26 +32,74 @@ const AdminDashboard = () => {
   const [userOrder, setUserOrder] = useState('desc');
   const [storeSortBy, setStoreSortBy] = useState('createdAt');
   const [storeOrder, setStoreOrder] = useState('desc');
+  const [createUserForm, setCreateUserForm] = useState({
+    name: '',
+    email: '',
+    address: '',
+    password: '',
+    role: 'NORMAL',
+  });
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [deletingUserId, setDeletingUserId] = useState('');
+  const [feedback, setFeedback] = useState(null);
 
-  useEffect(() => {
-    fetchStats();
-    fetchUsers();
-    fetchStores();
-  }, [search, userSortBy, userOrder, storeSortBy, storeOrder]);
+  const getApiErrorMessage = (error, fallbackMessage) => {
+    if (error?.response?.data?.errors?.length) {
+      return error.response.data.errors[0].msg;
+    }
+
+    return error?.response?.data?.message || fallbackMessage;
+  };
 
   const fetchStats = async () => {
-    const res = await api.get('/admin/dashboard');
-    if (res.data.success) setStats(res.data.data);
+    try {
+      const res = await api.get('/admin/dashboard');
+      if (res.data.success) setStats(res.data.data);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const fetchUsers = async () => {
-    const res = await api.get(`/admin/users?search=${search}&sortBy=${userSortBy}&order=${userOrder}&limit=500`);
-    if (res.data.success) setUsers(res.data.data.users);
+    try {
+      const res = await api.get(`/admin/users?search=${encodeURIComponent(search)}&sortBy=${userSortBy}&order=${userOrder}&limit=500`);
+      if (res.data.success) setUsers(res.data.data.users);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const fetchStores = async () => {
-    const res = await api.get(`/admin/stores?search=${search}&sortBy=${storeSortBy}&order=${storeOrder}&limit=500`);
-    if (res.data.success) setStores(res.data.data.stores);
+    try {
+      const res = await api.get(`/admin/stores?search=${encodeURIComponent(search)}&sortBy=${storeSortBy}&order=${storeOrder}&limit=500`);
+      if (res.data.success) setStores(res.data.data.stores);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      try {
+        const [statsRes, usersRes, storesRes] = await Promise.all([
+          api.get('/admin/dashboard'),
+          api.get(`/admin/users?search=${encodeURIComponent(search)}&sortBy=${userSortBy}&order=${userOrder}&limit=500`),
+          api.get(`/admin/stores?search=${encodeURIComponent(search)}&sortBy=${storeSortBy}&order=${storeOrder}&limit=500`),
+        ]);
+
+        if (statsRes.data.success) setStats(statsRes.data.data);
+        if (usersRes.data.success) setUsers(usersRes.data.data.users);
+        if (storesRes.data.success) setStores(storesRes.data.data.stores);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    loadDashboardData();
+  }, [search, userSortBy, userOrder, storeSortBy, storeOrder]);
+
+  const refreshDashboardData = async () => {
+    await Promise.all([fetchStats(), fetchUsers(), fetchStores()]);
   };
 
   const handleUserSort = (key) => {
@@ -64,10 +112,71 @@ const AdminDashboard = () => {
     else { setStoreSortBy(key); setStoreOrder('asc'); }
   };
 
+  const handleCreateUserInput = (e) => {
+    const { name, value } = e.target;
+    setCreateUserForm((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleCreateUser = async (e) => {
+    e.preventDefault();
+    setIsCreatingUser(true);
+    setFeedback(null);
+
+    try {
+      const res = await api.post('/admin/users', createUserForm);
+
+      if (res.data.success) {
+        setCreateUserForm({
+          name: '',
+          email: '',
+          address: '',
+          password: '',
+          role: 'NORMAL',
+        });
+        setFeedback({ type: 'success', message: 'New user created successfully.' });
+        await refreshDashboardData();
+      }
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        message: getApiErrorMessage(error, 'Unable to create the user right now.'),
+      });
+    } finally {
+      setIsCreatingUser(false);
+    }
+  };
+
+  const handleDeleteUser = async (targetUser) => {
+    const confirmed = window.confirm(
+      targetUser.role === 'STORE_OWNER'
+        ? `Remove ${targetUser.name}? Their store and related ratings will also be deleted.`
+        : `Remove ${targetUser.name}? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setDeletingUserId(targetUser.id);
+    setFeedback(null);
+
+    try {
+      const res = await api.delete(`/admin/users/${targetUser.id}`);
+
+      if (res.data.success) {
+        setFeedback({ type: 'success', message: res.data.message || 'User removed successfully.' });
+        await refreshDashboardData();
+      }
+    } catch (error) {
+      setFeedback({
+        type: 'error',
+        message: getApiErrorMessage(error, 'Unable to remove the user right now.'),
+      });
+    } finally {
+      setDeletingUserId('');
+    }
+  };
+
   // Derived data
-  const normalUsers = users.filter((u) => u.role === 'NORMAL');
   const ownerUsers = users.filter((u) => u.role === 'STORE_OWNER');
-  const adminUsers = users.filter((u) => u.role === 'ADMIN');
 
   const sideItems = [
     { icon: '📊', label: 'Dashboard', key: 'dashboard' },
@@ -105,7 +214,7 @@ const AdminDashboard = () => {
     );
   };
 
-  const renderUserTable = (data, showRole = true) => (
+  const renderUserTable = (data, showRole = true, showActions = false) => (
     <table style={{ width: '100%', borderCollapse: 'collapse' }}>
       <thead>
         <tr style={{ background: '#fafbfc' }}>
@@ -113,6 +222,7 @@ const AdminDashboard = () => {
           <th style={thStyle} onClick={() => handleUserSort('email')}>Email {userSortBy === 'email' ? (userOrder === 'asc' ? '↑' : '↓') : ''}</th>
           {showRole && <th style={thStyle} onClick={() => handleUserSort('role')}>Role {userSortBy === 'role' ? (userOrder === 'asc' ? '↑' : '↓') : ''}</th>}
           <th style={thStyle}>Address</th>
+          {showActions && <th style={{ ...thStyle, cursor: 'default' }}>Actions</th>}
         </tr>
       </thead>
       <tbody>
@@ -134,10 +244,44 @@ const AdminDashboard = () => {
             <td style={tdStyle}>{u.email}</td>
             {showRole && <td style={tdStyle}>{roleBadge(u.role)}</td>}
             <td style={tdStyle}>{u.address}</td>
+            {showActions && (
+              <td style={tdStyle}>
+                {u.id === user?.id ? (
+                  <span style={{
+                    display: 'inline-block',
+                    padding: '0.35rem 0.65rem',
+                    borderRadius: '999px',
+                    background: '#f8fafc',
+                    color: '#64748b',
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                  }}>Current account</span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteUser(u)}
+                    disabled={deletingUserId === u.id}
+                    style={{
+                      border: 'none',
+                      borderRadius: '10px',
+                      padding: '0.5rem 0.75rem',
+                      fontSize: '0.76rem',
+                      fontWeight: 700,
+                      cursor: deletingUserId === u.id ? 'not-allowed' : 'pointer',
+                      background: deletingUserId === u.id ? '#fecaca' : '#fee2e2',
+                      color: '#b91c1c',
+                      opacity: deletingUserId === u.id ? 0.75 : 1,
+                    }}
+                  >
+                    {deletingUserId === u.id ? 'Removing...' : 'Remove'}
+                  </button>
+                )}
+              </td>
+            )}
           </tr>
         ))}
         {data.length === 0 && (
-          <tr><td colSpan={showRole ? 4 : 3} style={{ ...tdStyle, textAlign: 'center', color: '#94a3b8' }}>No records found</td></tr>
+          <tr><td colSpan={showRole ? (showActions ? 5 : 4) : (showActions ? 4 : 3)} style={{ ...tdStyle, textAlign: 'center', color: '#94a3b8' }}>No records found</td></tr>
         )}
       </tbody>
     </table>
@@ -229,17 +373,6 @@ const AdminDashboard = () => {
     </table>
   );
 
-  // Get the current table title and data count
-  const getTableInfo = () => {
-    switch (activeTab) {
-      case 'users': return { title: 'All Users', count: normalUsers.length };
-      case 'stores': return { title: 'All Stores', count: stores.length };
-      case 'owners': return { title: 'Store Owners', count: ownerUsers.length };
-      case 'ratings': return { title: 'All Users (with Ratings View)', count: users.length };
-      default: return { title: 'All Users', count: users.length };
-    }
-  };
-
   return (
     <div style={{
       display: 'flex', gap: '0',
@@ -295,9 +428,9 @@ const AdminDashboard = () => {
               background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#fff', fontWeight: 700, fontSize: '0.85rem',
-            }}>{user?.name?.charAt(0) || 'A'}</div>
+            }}>{user?.email?.charAt(0) || 'A'}</div>
             <div>
-              <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{user?.name || 'Admin'}</p>
+              <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{user?.email || 'Admin'}</p>
               <p style={{ margin: 0, fontSize: '0.7rem', color: '#94a3b8' }}>Administrator</p>
             </div>
           </div>
@@ -331,9 +464,24 @@ const AdminDashboard = () => {
               background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#fff', fontWeight: 700, fontSize: '0.85rem',
-            }}>{user?.name?.charAt(0) || 'A'}</div>
+            }}>{user?.email?.charAt(0) || 'A'}</div>
           </div>
         </div>
+
+        {feedback && (
+          <div style={{
+            marginBottom: '1rem',
+            padding: '0.85rem 1rem',
+            borderRadius: '14px',
+            border: `1px solid ${feedback.type === 'error' ? '#fecaca' : '#bbf7d0'}`,
+            background: feedback.type === 'error' ? '#fef2f2' : '#f0fdf4',
+            color: feedback.type === 'error' ? '#b91c1c' : '#166534',
+            fontSize: '0.88rem',
+            fontWeight: 600,
+          }}>
+            {feedback.message}
+          </div>
+        )}
 
         {/* Dashboard overview — stat cards */}
         {activeTab === 'dashboard' && (
@@ -374,14 +522,112 @@ const AdminDashboard = () => {
 
         {/* Users Tab */}
         {activeTab === 'users' && (
-          <div style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)', borderRadius: '18px', border: '1px solid #e9e5ff', overflow: 'hidden' }}>
-            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e9e5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>All Users</h3>
-              <span style={{ fontSize: '0.75rem', background: '#e0e7ff', padding: '0.25rem 0.7rem', borderRadius: '8px', color: '#4f46e5', fontWeight: 600 }}>
-                {users.length} total
-              </span>
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            <div style={{
+              background: '#fff',
+              borderRadius: '18px',
+              border: '1px solid #e9e5ff',
+              padding: '1.25rem',
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div style={{ minWidth: '220px', maxWidth: '320px' }}>
+                  <h3 style={{ margin: '0 0 0.35rem', fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>Add New User</h3>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b', lineHeight: 1.5 }}>
+                    Create admin, normal, or store-owner accounts from here.
+                  </p>
+                </div>
+
+                <form
+                  onSubmit={handleCreateUser}
+                  style={{
+                    flex: '1 1 700px',
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+                    gap: '0.8rem',
+                    alignItems: 'center',
+                    minWidth: 0,
+                  }}
+                >
+                  <input
+                    name="name"
+                    value={createUserForm.name}
+                    onChange={handleCreateUserInput}
+                    placeholder="Full name (20-60 chars)"
+                    required
+                    style={{ padding: '0.72rem 0.9rem', border: '1px solid #dbe3ef', borderRadius: '12px', fontSize: '0.88rem', outline: 'none' }}
+                  />
+                  <input
+                    name="email"
+                    type="email"
+                    value={createUserForm.email}
+                    onChange={handleCreateUserInput}
+                    placeholder="Email"
+                    required
+                    style={{ padding: '0.72rem 0.9rem', border: '1px solid #dbe3ef', borderRadius: '12px', fontSize: '0.88rem', outline: 'none' }}
+                  />
+                  <input
+                    name="address"
+                    value={createUserForm.address}
+                    onChange={handleCreateUserInput}
+                    placeholder="Address"
+                    required
+                    style={{ padding: '0.72rem 0.9rem', border: '1px solid #dbe3ef', borderRadius: '12px', fontSize: '0.88rem', outline: 'none' }}
+                  />
+                  <input
+                    name="password"
+                    type="password"
+                    value={createUserForm.password}
+                    onChange={handleCreateUserInput}
+                    placeholder="Password"
+                    required
+                    style={{ padding: '0.72rem 0.9rem', border: '1px solid #dbe3ef', borderRadius: '12px', fontSize: '0.88rem', outline: 'none' }}
+                  />
+                  <select
+                    name="role"
+                    value={createUserForm.role}
+                    onChange={handleCreateUserInput}
+                    style={{ padding: '0.72rem 0.9rem', border: '1px solid #dbe3ef', borderRadius: '12px', fontSize: '0.88rem', outline: 'none', background: '#fff' }}
+                  >
+                    <option value="NORMAL">NORMAL</option>
+                    <option value="STORE_OWNER">STORE_OWNER</option>
+                    <option value="ADMIN">ADMIN</option>
+                  </select>
+                  <button
+                    type="submit"
+                    disabled={isCreatingUser}
+                    style={{
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '0.82rem 1rem',
+                      background: 'linear-gradient(135deg, #6366f1, #7c3aed)',
+                      color: '#fff',
+                      fontSize: '0.9rem',
+                      fontWeight: 700,
+                      cursor: isCreatingUser ? 'not-allowed' : 'pointer',
+                      opacity: isCreatingUser ? 0.75 : 1,
+                      minHeight: '48px',
+                    }}
+                  >
+                    {isCreatingUser ? 'Creating User...' : 'Create User'}
+                  </button>
+                </form>
+              </div>
             </div>
-            <div style={{ overflowX: 'auto' }}>{renderUserTable(users)}</div>
+
+            <div style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)', borderRadius: '18px', border: '1px solid #e9e5ff', overflow: 'hidden' }}>
+              <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e9e5ff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: '#1e293b' }}>All Users</h3>
+                  <p style={{ margin: '0.3rem 0 0', fontSize: '0.78rem', color: '#64748b' }}>
+                    Removing a store owner will also remove their store and related ratings.
+                  </p>
+                </div>
+                <span style={{ fontSize: '0.75rem', background: '#e0e7ff', padding: '0.25rem 0.7rem', borderRadius: '8px', color: '#4f46e5', fontWeight: 600 }}>
+                  {users.length} total
+                </span>
+              </div>
+              <div style={{ overflowX: 'auto' }}>{renderUserTable(users, true, true)}</div>
+            </div>
           </div>
         )}
 
