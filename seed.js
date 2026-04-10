@@ -25,7 +25,7 @@ async function main() {
   const salt = await bcrypt.genSalt(10);
   const password = await bcrypt.hash('Secure@123', salt);
 
-  const admin = await prisma.user.create({
+  await prisma.user.create({
     data: {
       name: 'System Administrator',
       email: 'admin@ratex.com',
@@ -55,6 +55,36 @@ async function main() {
     }
   });
 
+  const normal3 = await prisma.user.create({
+    data: {
+      name: 'Priya Shopper',
+      email: 'priya.s@mail.com',
+      password,
+      address: '303 Maple Residency',
+      role: 'NORMAL'
+    }
+  });
+
+  const normal4 = await prisma.user.create({
+    data: {
+      name: 'Marcus Buyer',
+      email: 'marcus.b@mail.com',
+      password,
+      address: '404 Cedar Heights',
+      role: 'NORMAL'
+    }
+  });
+
+  const normal5 = await prisma.user.create({
+    data: {
+      name: 'Elena Visitor',
+      email: 'elena.v@mail.com',
+      password,
+      address: '505 River Lane',
+      role: 'NORMAL'
+    }
+  });
+
   const storeData = [
     { name: "H&M", address: "Downtown Silicon Plaza", type: "tech", description: "Affordable fashion for men, women, and kids. Discover the latest trends with sustainable style choices and exclusive designer collaborations that keep you looking fresh every season." },
     { name: "Zara", address: "North Mall Annex", type: "retail", description: "Fast fashion at its finest. Zara brings runway-inspired designs to your wardrobe at accessible prices, with new collections dropping weekly to keep your style ahead of the curve." },
@@ -78,6 +108,19 @@ async function main() {
     { name: "Sephora", address: "Beauty Hub", type: "service", description: "Beauty for all. Sephora curates the world's best skincare, makeup, and fragrance brands. Enjoy personalized consultations, free makeovers, and exclusive product launches in-store." }
   ];
 
+  const reviewPool = [
+    { value: 5, review: 'Fantastic experience. The staff was friendly and everything felt polished from start to finish.' },
+    { value: 5, review: 'One of the best spots in the area. Clean, welcoming, and consistently reliable.' },
+    { value: 4, review: 'Very solid overall. Good quality, quick service, and I would definitely come back.' },
+    { value: 4, review: 'Loved the atmosphere and the selection. A couple of minor things could improve, but still great.' },
+    { value: 4, review: 'Great value for the price. Easy to recommend if you are nearby.' },
+    { value: 3, review: 'Pretty decent experience. Nothing bad, but there is still room to make it more memorable.' },
+    { value: 3, review: 'Average overall. The basics were covered, though service felt a little slow at peak time.' }
+  ];
+
+  const normalUsers = [normal1, normal2, normal3, normal4, normal5];
+  const createdStores = [];
+
   for (let i = 0; i < storeData.length; i++) {
     const s = storeData[i];
     
@@ -92,43 +135,61 @@ async function main() {
       }
     });
 
-    const averageRating = parseFloat(((Math.random() * 3) + 2).toFixed(2));
-    
     // Using picsum photos seeded by store name so it stays consistent between regenerations
     const imageUrl = `https://picsum.photos/seed/${encodeURIComponent(s.name.replace(/\s+/g, ''))}/400/250`;
 
-    await prisma.store.create({
+    const createdStore = await prisma.store.create({
       data: {
         name: s.name,
         email: `contact@${s.name.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}.com`,
         address: s.address,
         description: s.description,
         ownerId: owner.id,
-        averageRating,
+        averageRating: 0,
         imageUrl
       }
     });
+
+    createdStores.push(createdStore);
   }
 
-  // Create a couple of ratings bound to the normal users
-  const allStores = await prisma.store.findMany();
-  
-  if (allStores.length >= 2) {
-    await prisma.rating.create({
-      data: { value: 4, userId: normal1.id, storeId: allStores[0].id }
-    });
-    
-    await prisma.rating.create({
-      data: { value: 5, userId: normal2.id, storeId: allStores[0].id }
-    });
+  for (let i = 0; i < createdStores.length; i++) {
+    const store = createdStores[i];
+    const startIndex = i % normalUsers.length;
+    const storeReviewEntries = [];
 
-    await prisma.rating.create({
-      data: { value: 3, userId: normal1.id, storeId: allStores[1].id }
+    for (let offset = 0; offset < 3; offset++) {
+      const reviewer = normalUsers[(startIndex + offset) % normalUsers.length];
+      const preset = reviewPool[(i + offset) % reviewPool.length];
+
+      const rating = await prisma.rating.create({
+        data: {
+          value: preset.value,
+          review: preset.review,
+          userId: reviewer.id,
+          storeId: store.id
+        }
+      });
+
+      storeReviewEntries.push(rating);
+    }
+
+    const averageRating = storeReviewEntries.reduce((sum, entry) => sum + entry.value, 0) / storeReviewEntries.length;
+
+    await prisma.store.update({
+      where: { id: store.id },
+      data: { averageRating: parseFloat(averageRating.toFixed(2)) }
     });
-    
-    // Give normal1 a wishlist item securely 
-    await prisma.wishlist.create({
-      data: { userId: normal1.id, storeId: allStores[5].id }
+  }
+
+  if (createdStores.length >= 6) {
+    await prisma.wishlist.createMany({
+      data: [
+        { userId: normal1.id, storeId: createdStores[0].id },
+        { userId: normal1.id, storeId: createdStores[5].id },
+        { userId: normal2.id, storeId: createdStores[2].id },
+        { userId: normal3.id, storeId: createdStores[4].id }
+      ]
     });
   }
 

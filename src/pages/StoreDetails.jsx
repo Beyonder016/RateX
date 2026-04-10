@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
 
 /* ────────────────── Rate & Review Modal ────────────────── */
 const RateReviewModal = ({ currentRating, currentReview, onSubmit, onCancel }) => {
@@ -291,6 +292,7 @@ const ReviewsPanel = ({ reviews, averageRating, totalRatings, onClose }) => {
 const StoreDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [store, setStore] = useState(null);
   const [showRateModal, setShowRateModal] = useState(false);
   const [showReviews, setShowReviews] = useState(false);
@@ -326,6 +328,12 @@ const StoreDetails = () => {
 
   const handleRateSubmit = async (value, review) => {
     if (value < 1 || value > 5) return alert('Rating must be 1-5');
+
+    if (user?.role !== 'NORMAL') {
+      alert('Only normal users can submit ratings.');
+      return;
+    }
+
     try {
       if (store.userRatingId) {
         await api.put(`/ratings/${store.userRatingId}`, { value, review });
@@ -594,29 +602,36 @@ const StoreDetails = () => {
                 </button>
                 <button
                   onClick={() => setShowRateModal(true)}
+                  disabled={user?.role !== 'NORMAL'}
                   style={{
                     flex: 1,
                     padding: '0.85rem 1.5rem',
                     borderRadius: '14px',
                     border: '1.5px solid rgba(255,255,255,0.35)',
-                    background: 'rgba(255,255,255,0.08)',
+                    background: user?.role === 'NORMAL' ? 'rgba(255,255,255,0.08)' : 'rgba(148,163,184,0.25)',
                     backdropFilter: 'blur(8px)',
                     color: '#fff',
                     fontWeight: 700,
                     fontSize: '1rem',
-                    cursor: 'pointer',
+                    cursor: user?.role === 'NORMAL' ? 'pointer' : 'not-allowed',
+                    opacity: user?.role === 'NORMAL' ? 1 : 0.7,
                     transition: 'all 0.25s ease',
                     letterSpacing: '0.3px',
                     textShadow: '0 1px 2px rgba(0,0,0,0.1)',
                   }}
                   onMouseOver={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.22)';
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)';
+                    if (user?.role === 'NORMAL') {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.22)';
+                      e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.15)';
+                    }
                   }}
                   onMouseOut={(e) => {
-                    e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.background = user?.role === 'NORMAL'
+                      ? 'rgba(255,255,255,0.08)'
+                      : 'rgba(148,163,184,0.25)';
                     e.currentTarget.style.boxShadow = 'none';
                   }}
+                  title={user?.role === 'NORMAL' ? 'Rate this store' : 'Only normal users can rate stores'}
                 >
                   Rate Us
                 </button>
