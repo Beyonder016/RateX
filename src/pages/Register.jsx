@@ -38,6 +38,23 @@ const Register = () => {
     background: '#fff',
   };
 
+  const authVisualStyle = {
+    width: '45%',
+    minWidth: '380px',
+    backgroundColor: '#4f46e5',
+    backgroundImage:
+      "linear-gradient(135deg, rgba(15,23,42,0.18), rgba(79,70,229,0.14)), url('/login.jpg')",
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    padding: '3rem 2.5rem',
+    position: 'relative',
+    overflow: 'hidden',
+  };
+
   return (
     <div style={{
       display: 'flex',
@@ -50,31 +67,11 @@ const Register = () => {
       zIndex: 10,
     }}>
       {/* ───── Left: Gradient Panel ───── */}
-      <div style={{
-        width: '45%',
-        minWidth: '380px',
-        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 25%, #6366f1 50%, #818cf8 75%, #4f46e5 100%)',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '3rem 2.5rem',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
+      <div style={authVisualStyle}>
         <div style={{
-          position: 'absolute', top: '-80px', left: '-80px',
-          width: '350px', height: '350px', borderRadius: '50%',
-          background: 'rgba(129,140,248,0.45)', filter: 'blur(90px)',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '-60px', right: '-60px',
-          width: '300px', height: '300px', borderRadius: '50%',
-          background: 'rgba(99,102,241,0.5)', filter: 'blur(70px)',
-        }} />
-        <div style={{
-          position: 'absolute', top: '35%', left: '25%',
-          width: '250px', height: '250px', borderRadius: '50%',
-          background: 'rgba(167,139,250,0.3)', filter: 'blur(80px)',
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(180deg, rgba(15,23,42,0.08), rgba(15,23,42,0.32))',
         }} />
 
         <div style={{ position: 'relative', zIndex: 1 }}>

@@ -31,6 +31,49 @@ const Login = () => {
     background: '#fff',
   };
 
+  const authVisualStyle = {
+    width: '45%',
+    minWidth: '380px',
+    backgroundColor: '#4f46e5',
+    backgroundImage:
+      "linear-gradient(135deg, rgba(15,23,42,0.18), rgba(79,70,229,0.14)), url('/login.jpg')",
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    padding: '3rem 2.5rem',
+    position: 'relative',
+    overflow: 'hidden',
+  };
+
+  const formPanelStyle = {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '2rem 4rem',
+    backgroundColor: '#f8fafc',
+    backgroundImage:
+      'radial-gradient(circle at top left, rgba(99,102,241,0.08), transparent 22%), radial-gradient(circle at bottom right, rgba(14,165,233,0.08), transparent 24%)',
+    position: 'relative',
+    overflow: 'hidden',
+  };
+
+  const formCardStyle = {
+    width: '100%',
+    maxWidth: '430px',
+    padding: '2.4rem',
+    background: 'rgba(255,255,255,0.88)',
+    border: '1px solid rgba(226,232,240,0.95)',
+    borderRadius: '28px',
+    boxShadow: '0 24px 60px rgba(15,23,42,0.08)',
+    backdropFilter: 'blur(12px)',
+    position: 'relative',
+    zIndex: 1,
+  };
+
   return (
     <div style={{
       display: 'flex',
@@ -43,45 +86,54 @@ const Login = () => {
       zIndex: 10,
     }}>
       {/* ───── Left: Gradient Panel (~45% width) ───── */}
-      <div style={{
-        width: '45%',
-        minWidth: '380px',
-        background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 25%, #6366f1 50%, #818cf8 75%, #4f46e5 100%)',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
-        padding: '3rem 2.5rem',
-        position: 'relative',
-        overflow: 'hidden',
-      }}>
-        {/* Decorative blurred orbs */}
+      <div style={authVisualStyle}>
         <div style={{
-          position: 'absolute', top: '-80px', left: '-80px',
-          width: '350px', height: '350px', borderRadius: '50%',
-          background: 'rgba(129,140,248,0.45)', filter: 'blur(90px)',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '-60px', right: '-60px',
-          width: '300px', height: '300px', borderRadius: '50%',
-          background: 'rgba(99,102,241,0.5)', filter: 'blur(70px)',
-        }} />
-        <div style={{
-          position: 'absolute', top: '35%', left: '25%',
-          width: '250px', height: '250px', borderRadius: '50%',
-          background: 'rgba(167,139,250,0.3)', filter: 'blur(80px)',
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(180deg, rgba(15,23,42,0.08), rgba(15,23,42,0.32))',
         }} />
 
         {/* Hero text */}
-        <div style={{ position: 'relative', zIndex: 1 }}>
-          <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.85rem', marginBottom: '0.75rem', fontWeight: 400 }}>
-            You can easily
-          </p>
-          <h1 style={{
-            color: '#fff', fontSize: '2.6rem', fontWeight: 800,
-            lineHeight: '1.15', letterSpacing: '-1px', margin: 0,
-          }}>
-            Speed up your work<br />with our Web App
-          </h1>
+        <div style={{ position: 'relative', zIndex: 1, display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.85rem' }}>
+            <div style={{
+              width: '44px',
+              height: '44px',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, rgba(255,255,255,0.35), rgba(255,255,255,0.14))',
+              border: '1px solid rgba(255,255,255,0.28)',
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.1rem',
+              fontWeight: 800,
+              boxShadow: '0 16px 30px rgba(15,23,42,0.12)',
+              backdropFilter: 'blur(6px)',
+            }}>
+              R
+            </div>
+            <div>
+              <div style={{ color: '#fff', fontSize: '1.3rem', fontWeight: 800, letterSpacing: '-0.4px' }}>
+                RateX
+              </div>
+              <div style={{ color: 'rgba(255,255,255,0.68)', fontSize: '0.78rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                Store ratings platform
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <p style={{ color: 'rgba(255,255,255,0.62)', fontSize: '0.85rem', marginBottom: '0.75rem', fontWeight: 500 }}>
+              You can easily
+            </p>
+            <h1 style={{
+              color: '#fff', fontSize: '2.6rem', fontWeight: 800,
+              lineHeight: '1.15', letterSpacing: '-1px', margin: 0,
+            }}>
+              Speed up your work<br />with our Web App
+            </h1>
+          </div>
         </div>
 
         {/* Partners */}
@@ -103,15 +155,16 @@ const Login = () => {
       </div>
 
       {/* ───── Right: Form Panel ───── */}
-      <div style={{
-        flex: 1,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: '2rem 4rem',
-        background: '#fff',
-      }}>
-        <div style={{ width: '100%', maxWidth: '380px' }}>
+      <div style={formPanelStyle}>
+        <div style={{
+          position: 'absolute',
+          inset: '0 auto auto 0',
+          width: '260px',
+          height: '260px',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.75), rgba(255,255,255,0))',
+          pointerEvents: 'none',
+        }} />
+        <div style={formCardStyle}>
           <h2 style={{
             fontSize: '1.85rem', fontWeight: 800, color: '#1e293b',
             marginBottom: '0.4rem', letterSpacing: '-0.5px',
@@ -193,21 +246,25 @@ const Login = () => {
                 padding: '0.82rem',
                 borderRadius: '12px',
                 border: 'none',
-                background: 'linear-gradient(135deg, #6366f1, #7c3aed)',
+                background: 'linear-gradient(135deg, #4f46e5 0%, #7c3aed 58%, #8b5cf6 100%)',
                 color: '#fff',
                 fontSize: '0.95rem',
                 fontWeight: 700,
                 cursor: 'pointer',
-                transition: 'all 0.25s ease',
-                boxShadow: '0 4px 14px rgba(99,102,241,0.35)',
+                transition: 'transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease',
+                boxShadow: '0 12px 26px rgba(99,102,241,0.28), 0 0 0 1px rgba(255,255,255,0.12) inset',
+                transform: 'translateY(0) scale(1)',
+                filter: 'saturate(1)',
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 6px 20px rgba(99,102,241,0.45)';
+                e.currentTarget.style.transform = 'translateY(-2px) scale(1.01)';
+                e.currentTarget.style.boxShadow = '0 18px 34px rgba(99,102,241,0.36), 0 0 18px rgba(139,92,246,0.18)';
+                e.currentTarget.style.filter = 'saturate(1.08)';
               }}
               onMouseOut={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 14px rgba(99,102,241,0.35)';
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 12px 26px rgba(99,102,241,0.28), 0 0 0 1px rgba(255,255,255,0.12) inset';
+                e.currentTarget.style.filter = 'saturate(1)';
               }}
             >
               Log in
