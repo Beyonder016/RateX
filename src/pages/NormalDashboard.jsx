@@ -2,21 +2,74 @@ import React, { useEffect, useState } from 'react';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
 
+const LoadingCard = () => (
+  <div style={{
+    borderRadius: '20px',
+    overflow: 'hidden',
+    background: '#fff',
+    border: '1px solid #f1f5f9',
+    boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+  }}>
+    <div style={{ padding: '0.6rem 0.6rem 0' }}>
+      <div style={{
+        width: '100%',
+        height: '200px',
+        borderRadius: '14px',
+        background: 'linear-gradient(90deg, #f8fafc 25%, #eef2f7 37%, #f8fafc 63%)',
+        backgroundSize: '400% 100%',
+        animation: 'shimmer 1.4s ease infinite',
+      }} />
+    </div>
+    <div style={{ padding: '0.9rem 1.15rem 1.15rem' }}>
+      <div style={{
+        width: '58%',
+        height: '18px',
+        borderRadius: '999px',
+        background: '#e2e8f0',
+        marginBottom: '0.9rem',
+      }} />
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{
+          width: '42%',
+          height: '14px',
+          borderRadius: '999px',
+          background: '#e2e8f0',
+        }} />
+        <div style={{
+          width: '54px',
+          height: '26px',
+          borderRadius: '8px',
+          background: '#fef3c7',
+        }} />
+      </div>
+    </div>
+  </div>
+);
+
 const NormalDashboard = () => {
   const [stores, setStores] = useState([]);
   const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  async function fetchStores() {
+    setLoading(true);
+
+    try {
+      const res = await api.get(`/stores?search=${encodeURIComponent(search)}&sortBy=name&order=asc&limit=50&includeTotal=false`);
+      if (res.data.success) {
+        setStores(res.data.data.stores);
+      }
+    } catch (err) {
+      console.error('Failed to fetch stores:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     fetchStores();
   }, [search]);
-
-  const fetchStores = async () => {
-    const res = await api.get(`/stores?search=${search}&sortBy=name&order=asc&limit=50`);
-    if (res.data.success) {
-      setStores(res.data.data.stores);
-    }
-  };
 
   const toggleWishlist = async (e, storeId) => {
     e.stopPropagation();
@@ -50,6 +103,11 @@ const NormalDashboard = () => {
             <p style={{ color: '#7a6e5d', fontSize: '0.85rem', margin: 0 }}>
               Discover and rate your favorite places
             </p>
+            {loading && stores.length > 0 && (
+              <p style={{ color: '#94a3b8', fontSize: '0.75rem', margin: '0.35rem 0 0' }}>
+                Refreshing stores...
+              </p>
+            )}
           </div>
           <div style={{ position: 'relative' }}>
             <input
@@ -91,6 +149,10 @@ const NormalDashboard = () => {
           gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
           gap: '1.25rem',
         }}>
+          {loading && stores.length === 0 && Array.from({ length: 6 }).map((_, index) => (
+            <LoadingCard key={index} />
+          ))}
+
           {stores.map(store => (
             <div
               key={store.id}
@@ -182,13 +244,20 @@ const NormalDashboard = () => {
           ))}
         </div>
 
-        {stores.length === 0 && (
+        {stores.length === 0 && !loading && (
           <div style={{ textAlign: 'center', marginTop: '5rem' }}>
             <p style={{ fontSize: '3rem', marginBottom: '0.5rem' }}>🔍</p>
             <h2 style={{ color: '#102E4A', fontWeight: 700 }}>No stores found</h2>
             <p style={{ color: '#7a6e5d' }}>Try adjusting your search terms</p>
           </div>
         )}
+
+        <style>{`
+          @keyframes shimmer {
+            0% { background-position: 100% 0; }
+            100% { background-position: -100% 0; }
+          }
+        `}</style>
       </div>
     </>
   );

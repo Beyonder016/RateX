@@ -3,7 +3,7 @@ import prisma from '../prisma.js';
 export const getStoresWithUserRating = async (req, res) => {
   try {
     const userId = req.user.id;
-    let { search, sortBy = 'averageRating', order = 'desc', page = 1, limit = 10 } = req.query;
+    let { search, sortBy = 'averageRating', order = 'desc', page = 1, limit = 10, includeTotal = 'true' } = req.query;
     page = parseInt(page);
     limit = parseInt(limit);
     const skip = (page - 1) * limit;
@@ -32,8 +32,6 @@ export const getStoresWithUserRating = async (req, res) => {
       }
     });
 
-    const total = await prisma.store.count({ where });
-
     // Restructure to include userRating cleanly
     const formattedStores = stores.map(store => {
       const userRatingObj = store.ratings[0];
@@ -50,7 +48,13 @@ export const getStoresWithUserRating = async (req, res) => {
       };
     });
 
-    res.json({ success: true, data: { stores: formattedStores, total, page, limit } });
+    const data = { stores: formattedStores, page, limit };
+
+    if (includeTotal !== 'false') {
+      data.total = await prisma.store.count({ where });
+    }
+
+    res.json({ success: true, data });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: 'Server error' });

@@ -1,22 +1,31 @@
 import React, { useEffect, useState } from 'react';
 import api from '../api';
-import { NeoCard, NeoInput } from '../components/NeoUI';
+import { NeoCard } from '../components/NeoUI';
 import { useNavigate } from 'react-router-dom';
 
 const Wishlists = () => {
   const [stores, setStores] = useState([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  async function fetchWishlists() {
+    setLoading(true);
+
+    try {
+      const res = await api.get('/wishlists');
+      if (res.data.success) {
+        setStores(res.data.data.stores);
+      }
+    } catch (err) {
+      console.error('Failed to fetch wishlists:', err);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
     fetchWishlists();
   }, []);
-
-  const fetchWishlists = async () => {
-    const res = await api.get('/wishlists');
-    if (res.data.success) {
-      setStores(res.data.data.stores);
-    }
-  };
 
   const toggleWishlist = async (e, storeId) => {
     e.stopPropagation();
@@ -31,6 +40,12 @@ const Wishlists = () => {
   return (
     <div>
       <h1 style={{ color: 'var(--text-color)', marginBottom: '2rem' }}>Your Wishlists</h1>
+
+      {loading && stores.length === 0 && (
+        <div style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '4rem' }}>
+          Loading your wishlist...
+        </div>
+      )}
 
       <div className="grid-3">
         {stores.map(store => (
@@ -78,7 +93,7 @@ const Wishlists = () => {
           </NeoCard>
         ))}
       </div>
-      {stores.length === 0 && <h2 style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '4rem' }}>Your wishlist is empty.</h2>}
+      {stores.length === 0 && !loading && <h2 style={{ textAlign: 'center', color: 'var(--text-muted)', marginTop: '4rem' }}>Your wishlist is empty.</h2>}
     </div>
   );
 };
