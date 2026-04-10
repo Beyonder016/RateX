@@ -16,6 +16,7 @@ Create a `.env` file using `.env.example`.
 Required values:
 
 - `DATABASE_URL`
+- `DIRECT_URL`
 - `JWT_SECRET`
 - `PORT` for local backend development
 
@@ -66,10 +67,14 @@ This repository is prepared for Vercel deployment:
 Recommended production flow:
 
 1. Create a managed PostgreSQL database.
-2. Set `DATABASE_URL` and `JWT_SECRET` in Vercel.
-3. Run `npm run db:migrate` against the production database.
-4. Optionally run `npm run db:seed` once if you want demo data.
-5. Deploy to Vercel.
+2. Set `DATABASE_URL` in Vercel to a pooled runtime connection string.
+3. Set `DIRECT_URL` to the direct database connection string for Prisma CLI and migrations.
+4. Set `JWT_SECRET` in Vercel.
+5. Run `npm run db:migrate` against the production database.
+6. Optionally run `npm run db:seed` once if you want demo data.
+7. Deploy to Vercel.
+
+For Neon specifically, use the `-pooler` host for `DATABASE_URL` and keep the non-pooler direct host in `DIRECT_URL`.
 
 ## Useful Scripts
 

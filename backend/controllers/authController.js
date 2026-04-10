@@ -4,6 +4,20 @@ import prisma from '../prisma.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretjwtkey';
 
+const getAuthErrorResponse = (error, fallbackMessage) => {
+  if (error?.name === 'PrismaClientInitializationError') {
+    return {
+      status: 503,
+      message: 'Database is temporarily unavailable. Please try again in a moment.'
+    };
+  }
+
+  return {
+    status: 500,
+    message: fallbackMessage
+  };
+};
+
 export const register = async (req, res) => {
   try {
     const { name, email, address, password } = req.body;
@@ -16,7 +30,7 @@ export const register = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const user = await prisma.user.create({
+    await prisma.user.create({
       data: {
         name,
         email,
@@ -29,7 +43,8 @@ export const register = async (req, res) => {
     res.status(201).json({ success: true, message: 'Registration successful' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Server error during registration' });
+    const response = getAuthErrorResponse(error, 'Server error during registration');
+    res.status(response.status).json({ success: false, message: response.message });
   }
 };
 
@@ -66,7 +81,8 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Server error during login' });
+    const response = getAuthErrorResponse(error, 'Server error during login');
+    res.status(response.status).json({ success: false, message: response.message });
   }
 };
 
@@ -86,6 +102,7 @@ export const updatePassword = async (req, res) => {
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ success: false, message: 'Server error during password update' });
+    const response = getAuthErrorResponse(error, 'Server error during password update');
+    res.status(response.status).json({ success: false, message: response.message });
   }
 };
