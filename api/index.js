@@ -1,10 +1,10 @@
 import express from 'express';
 import cors from 'cors';
-import authRoutes from './routes/authRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
-import storeRoutes from './routes/storeRoutes.js';
-import ratingRoutes from './routes/ratingRoutes.js';
-import wishlistRoutes from './routes/wishlistRoutes.js';
+import authRoutes from '../backend/routes/authRoutes.js';
+import adminRoutes from '../backend/routes/adminRoutes.js';
+import storeRoutes from '../backend/routes/storeRoutes.js';
+import ratingRoutes from '../backend/routes/ratingRoutes.js';
+import wishlistRoutes from '../backend/routes/wishlistRoutes.js';
 
 const app = express();
 

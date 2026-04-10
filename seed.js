@@ -5,6 +5,15 @@ import 'dotenv/config';
 const prisma = new PrismaClient();
 
 async function main() {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const allowProductionSeed = process.env.ALLOW_PRODUCTION_SEED === 'true';
+
+  if (isProduction && !allowProductionSeed) {
+    throw new Error(
+      'Refusing to run destructive seed in production. Set ALLOW_PRODUCTION_SEED=true only if you intentionally want demo data.'
+    );
+  }
+
   console.log('Seeding database with realistic records...');
   
   // Wipe existing
