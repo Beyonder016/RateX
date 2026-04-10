@@ -1,0 +1,69 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  NORMAL
+  STORE_OWNER
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String   
+  email     String   @unique // Login email
+  password  String   
+  address   String   
+  role      Role     @default(NORMAL)
+  store     Store?   // Each owner can own exactly one store.
+  ratings   Rating[]
+  wishlists Wishlist[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Store {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique // Distinct from owner's login email
+  address       String
+  ownerId       String   @unique // Enforced 1-to-1: One unique owner per store
+  owner         User     @relation(fields: [ownerId], references: [id])
+  ratings       Rating[]
+  averageRating Float    @default(0.0)
+  description   String?
+  imageUrl      String?
+  wishlists     Wishlist[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Rating {
+  id        String   @id @default(uuid())
+  value     Int      // Validation strictly enforces 1 to 5
+  review    String?  // Optional text review
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, storeId]) // Guarantees 1 rating max per user per store
+}
+
+model Wishlist {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  storeId   String
+  store     Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, storeId])
+}
